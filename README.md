@@ -4,7 +4,7 @@ Stats-driven AFL betting advisor. Private research project.
 
 This is **not** an arbitrage system (see [match-bet](https://github.com/) for that). This system builds statistical models, computes expected value against bookmaker prices, and produces paper-trading recommendations with rigorous evaluation (CLV, Brier, calibration).
 
-**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete.
+**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete. Phase 4 (disposals model + walk-forward backtest) complete.
 
 ## What it does
 

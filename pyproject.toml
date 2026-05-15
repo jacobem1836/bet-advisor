@@ -37,6 +37,9 @@ dev = [
   "responses>=0.25",
 ]
 
+[project.scripts]
+bet-advisor = "bet_advisor.main:cli"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

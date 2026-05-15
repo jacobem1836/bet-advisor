@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -132,9 +132,7 @@ class OddsAPIClient:
     ) -> None:
         resolved = api_key or os.environ.get("ODDS_API_KEY")
         if not resolved:
-            raise ValueError(
-                "Odds API key must be passed or set via ODDS_API_KEY env var"
-            )
+            raise ValueError("Odds API key must be passed or set via ODDS_API_KEY env var")
         self._api_key = resolved
         self._client = httpx.Client(timeout=timeout)
         self.remaining_quota: int | None = None
@@ -161,9 +159,7 @@ class OddsAPIClient:
                     self.remaining_quota = int(remaining)
                 except ValueError:
                     pass
-            logger.info(
-                "Odds API: %s | used=%s remaining=%s", path, used, remaining
-            )
+            logger.info("Odds API: %s | used=%s remaining=%s", path, used, remaining)
             return resp.json()
 
         return _do()
@@ -192,13 +188,9 @@ class OddsAPIClient:
             "oddsFormat": "decimal",
         }
         if commence_time_from:
-            params["commenceTimeFrom"] = commence_time_from.strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
+            params["commenceTimeFrom"] = commence_time_from.strftime("%Y-%m-%dT%H:%M:%SZ")
         if commence_time_to:
-            params["commenceTimeTo"] = commence_time_to.strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
+            params["commenceTimeTo"] = commence_time_to.strftime("%Y-%m-%dT%H:%M:%SZ")
         try:
             return self._get(f"/sports/{sport_key}/odds", params)
         except httpx.HTTPStatusError as exc:
@@ -243,13 +235,9 @@ class OddsAPIClient:
             "oddsFormat": odds_format,
         }
         if commence_time_from:
-            params["commenceTimeFrom"] = commence_time_from.strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
+            params["commenceTimeFrom"] = commence_time_from.strftime("%Y-%m-%dT%H:%M:%SZ")
         if commence_time_to:
-            params["commenceTimeTo"] = commence_time_to.strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
+            params["commenceTimeTo"] = commence_time_to.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         try:
             raw = self._get(f"/sports/{sport_key}/odds", params)
@@ -282,9 +270,7 @@ class OddsAPIClient:
             "oddsFormat": "decimal",
         }
         try:
-            raw = self._get(
-                f"/sports/{sport_key}/events/{event_id}/odds", params
-            )
+            raw = self._get(f"/sports/{sport_key}/events/{event_id}/odds", params)
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 404:
                 logger.debug("Event %s not found for props", event_id)
@@ -312,7 +298,9 @@ class OddsAPIClient:
                     Runner(
                         name=o["name"],
                         price=float(o["price"]),
-                        point=float(o["point"]) if "point" in o and o["point"] is not None else None,
+                        point=float(o["point"])
+                        if "point" in o and o["point"] is not None
+                        else None,
                     )
                     for o in market.get("outcomes", [])
                 )

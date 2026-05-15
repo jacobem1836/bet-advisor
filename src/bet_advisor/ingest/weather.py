@@ -138,8 +138,8 @@ class WeatherClient:
         """
         date_str = date_utc.strftime("%Y-%m-%d")
         params = {
-            "latitude": lat,
-            "longitude": lon,
+            "latitude": str(lat),
+            "longitude": str(lon),
             "start_date": date_str,
             "end_date": date_str,
             "hourly": ",".join(_WEATHER_VARS),
@@ -167,8 +167,8 @@ class WeatherClient:
         """
         date_str = when_utc.strftime("%Y-%m-%d")
         params = {
-            "latitude": lat,
-            "longitude": lon,
+            "latitude": str(lat),
+            "longitude": str(lon),
             "hourly": ",".join(_WEATHER_VARS),
             "start_date": date_str,
             "end_date": date_str,

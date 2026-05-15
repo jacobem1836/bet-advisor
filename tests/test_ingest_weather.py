@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from bet_advisor.ingest.weather import WeatherClient, _is_indoor, _NULL_WEATHER
+from bet_advisor.ingest.weather import _NULL_WEATHER, WeatherClient, _is_indoor
 
 
 def _mock_open_meteo_response(
@@ -89,9 +89,7 @@ class TestHistoricalFetch:
         resp.raise_for_status.return_value = None
         return resp
 
-    def test_outdoor_venue_returns_weather_values(
-        self, weather_client: WeatherClient
-    ) -> None:
+    def test_outdoor_venue_returns_weather_values(self, weather_client: WeatherClient) -> None:
         data = _mock_open_meteo_response(temp=20.0, wind=12.0)
         resp = self._mock_httpx_response(data)
 
@@ -105,9 +103,7 @@ class TestHistoricalFetch:
         assert result["temp_c"] == pytest.approx(20.0)
         assert result["wind_kmh"] == pytest.approx(12.0)
 
-    def test_historical_parse_returns_correct_keys(
-        self, weather_client: WeatherClient
-    ) -> None:
+    def test_historical_parse_returns_correct_keys(self, weather_client: WeatherClient) -> None:
         data = _mock_open_meteo_response()
         resp = self._mock_httpx_response(data)
 
@@ -119,13 +115,15 @@ class TestHistoricalFetch:
             )
 
         assert set(result.keys()) == {
-            "temp_c", "wind_kmh", "wind_direction_deg",
-            "precip_mm", "humidity_pct", "conditions"
+            "temp_c",
+            "wind_kmh",
+            "wind_direction_deg",
+            "precip_mm",
+            "humidity_pct",
+            "conditions",
         }
 
-    def test_http_error_returns_null_weather(
-        self, weather_client: WeatherClient
-    ) -> None:
+    def test_http_error_returns_null_weather(self, weather_client: WeatherClient) -> None:
         import httpx
 
         with patch.object(
@@ -163,9 +161,7 @@ class TestFetchForMatch:
         mock_get.assert_not_called()
         assert result["conditions"] == "indoor"
 
-    def test_unknown_venue_no_coords_returns_null(
-        self, weather_client: WeatherClient
-    ) -> None:
+    def test_unknown_venue_no_coords_returns_null(self, weather_client: WeatherClient) -> None:
         with patch.object(weather_client._client, "get") as mock_get:
             result = weather_client.fetch_for_match(
                 venue_name="Totally Unknown Oval 9999",

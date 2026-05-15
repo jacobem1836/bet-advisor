@@ -6,9 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-
 _BACKFILL_SCRIPT = Path(__file__).parent.parent / "scripts" / "backfill.py"
 
 
@@ -39,7 +36,13 @@ class TestDryRun:
     def test_dry_run_does_not_create_database(self, tmp_path: Path) -> None:
         """--dry-run must not write any database file."""
         result = subprocess.run(
-            [sys.executable, str(_BACKFILL_SCRIPT), "--dry-run", "--db", str(tmp_path / "test.duckdb")],
+            [
+                sys.executable,
+                str(_BACKFILL_SCRIPT),
+                "--dry-run",
+                "--db",
+                str(tmp_path / "test.duckdb"),
+            ],
             capture_output=True,
             text=True,
             cwd=str(tmp_path),
@@ -66,7 +69,6 @@ class TestBackfillModuleImport:
 
     def test_import_run_backfill(self) -> None:
         import importlib.util
-        import sys
 
         spec = importlib.util.spec_from_file_location("backfill", _BACKFILL_SCRIPT)
         mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]

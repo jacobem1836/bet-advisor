@@ -20,9 +20,7 @@ def tmp_store(tmp_path: Path) -> SQLiteStore:
 
 class TestSchemaInit:
     def test_tables_created(self, tmp_store: SQLiteStore) -> None:
-        rows = tmp_store.query(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-        )
+        rows = tmp_store.query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         names = {r["name"] for r in rows}
         expected = {"bets", "events", "model_versions", "odds_snapshots", "signals"}
         assert expected.issubset(names)
@@ -38,9 +36,7 @@ class TestSchemaInit:
     def test_init_is_idempotent(self, tmp_store: SQLiteStore) -> None:
         # connect() is called again -- must not raise or duplicate tables
         tmp_store.connect()
-        rows = tmp_store.query(
-            "SELECT COUNT(*) AS cnt FROM sqlite_master WHERE type='table'"
-        )
+        rows = tmp_store.query("SELECT COUNT(*) AS cnt FROM sqlite_master WHERE type='table'")
         assert rows[0]["cnt"] >= 5
 
 
@@ -106,7 +102,7 @@ class TestOddsSnapshots:
                 market="h2h",
                 runner="Richmond",
                 price=price,
-                captured_at=f"2026-04-01T0{i+7}:00:00Z",
+                captured_at=f"2026-04-01T0{i + 7}:00:00Z",
             )
         rows = tmp_store.query("SELECT COUNT(*) AS cnt FROM odds_snapshots")
         assert rows[0]["cnt"] == 3

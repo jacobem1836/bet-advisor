@@ -194,10 +194,12 @@ def run_backfill(
                         lat, lon = coords
                         wx = wx_client.fetch_historical(lat, lon, date_dt)
                         wx_df = pd.DataFrame(
-                            [{
-                                "match_id": row["match_id"],
-                                **wx,
-                            }]
+                            [
+                                {
+                                    "match_id": row["match_id"],
+                                    **wx,
+                                }
+                            ]
                         )
                         inserted_wx += store.upsert_weather(wx_df)
                     except Exception as exc:  # noqa: BLE001

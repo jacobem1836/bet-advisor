@@ -15,8 +15,10 @@ dependencies = [
   "scikit-learn>=1.5",
   "scipy>=1.13",
   "statsmodels>=0.14",
-  "shin>=1.0",
-  "pyAFL>=0.3",
+  # shin dropped Python 3.14+ support; install with --no-deps or use a fork
+  # "shin>=1.0",  # deferred until upstream adds 3.14 support
+  # pyAFL has no 3.14 wheel; install from source if needed
+  # "pyAFL>=0.3",  # deferred -- afl_tables.py has a scraper fallback
   "betfairlightweight>=2.20",
   "beautifulsoup4>=4.12",
   "lxml>=5.2",
@@ -32,6 +34,7 @@ dev = [
   "ruff>=0.6",
   "mypy>=1.11",
   "ipykernel>=6.29",
+  "responses>=0.25",
 ]
 
 [build-system]
@@ -47,3 +50,13 @@ target-version = "py312"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+no_strict_optional = true
+warn_unused_ignores = false
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "S608", "S101"]

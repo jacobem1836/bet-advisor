@@ -8,19 +8,18 @@ and timezone handling. The scheduler is never actually started in these tests.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from bet_advisor.scheduler import (
+    _BRISBANE,
     Scheduler,
     _in_final_minute_window,
     _in_pre_bounce_window,
     _quota_exhausted,
-    _BRISBANE,
 )
 from bet_advisor.storage.sqlite_store import SQLiteStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -148,8 +147,8 @@ class TestQuotaEnforcement:
         # Exhaust the quota
         tmp_sqlite.record_quota_usage("bet-advisor-test", requests_used=500)
 
-        # Patch the OddsAPIClient to verify it is never called
-        with patch("bet_advisor.scheduler.OddsAPIClient") as mock_client_cls:
+        # OddsAPIClient is imported lazily inside the job; patch at its source module
+        with patch("bet_advisor.ingest.odds_api.OddsAPIClient") as mock_client_cls:
             sched._job_refresh_odds_low_freq()
             mock_client_cls.assert_not_called()
 
@@ -176,14 +175,13 @@ class TestTimezoneHandling:
 
     def test_pre_bounce_window_true_for_upcoming_match(self, tmp_sqlite: SQLiteStore) -> None:
         """Insert an event 60 minutes from now and check the window fires."""
-        from datetime import UTC, datetime, timedelta
+        from datetime import datetime, timedelta
         from zoneinfo import ZoneInfo
 
         brisbane = ZoneInfo("Australia/Brisbane")
         # Create an event that commences 60 minutes from now (well within 2h window)
         commence = datetime.now(brisbane) + timedelta(minutes=60)
         commence_str = commence.isoformat()
-        today_str = commence.date().isoformat()
 
         tmp_sqlite.upsert_event(
             event_id="evt-window-test",

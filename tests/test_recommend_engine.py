@@ -7,11 +7,9 @@ No HTTP calls are made.
 
 from __future__ import annotations
 
-import sqlite3
-import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -22,7 +20,6 @@ from bet_advisor.recommend.engine import (
     UntrainedModelError,
 )
 from bet_advisor.storage.sqlite_store import SQLiteStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -274,9 +271,7 @@ class TestScoreMarket:
         recs = engine.score_market("evt-001", lines, {})
         assert recs == []
 
-    def test_confidence_tier_strong(
-        self, tmp_sqlite: SQLiteStore, fake_duckdb: MagicMock
-    ) -> None:
+    def test_confidence_tier_strong(self, tmp_sqlite: SQLiteStore, fake_duckdb: MagicMock) -> None:
         """A high-edge bet with low uncertainty should be 'strong'."""
         config = RecommendationConfig(bankroll=1000.0, min_edge=0.03)
         model = _FakeTrainedModel()

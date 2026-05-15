@@ -118,8 +118,6 @@ class MarkdownReport:
 
     def _section_header(self, report_date: date, pnl: dict[str, Any]) -> str:
         bankroll = pnl.get("bankroll", 0.0)
-        today_units = pnl.get("today_units", 0.0)
-        # Units used today and remaining (in flat % terms, proxy)
         day_count = pnl.get("today_bets", 0)
         today_currency = pnl.get("today_units", 0.0)
 
@@ -144,7 +142,9 @@ class MarkdownReport:
         )
         rows: list[str] = []
         for i, rec in enumerate(recs, 1):
-            stake_display = f"{rec.recommended_stake_units:.2%} / ${rec.recommended_stake_currency:.2f}"
+            stake_display = (
+                f"{rec.recommended_stake_units:.2%} / ${rec.recommended_stake_currency:.2f}"
+            )
             rows.append(
                 f"| {i} "
                 f"| {rec.event_id} "
@@ -172,9 +172,11 @@ class MarkdownReport:
                 f"Model P: {rec.model_prob:.3f} [{rec.model_prob_low:.3f}-{rec.model_prob_high:.3f}]  "
                 f"Mkt P: {rec.devigged_market_prob:.3f}"
             )
-            parts.append(f"- EV per unit: {rec.ev_units:.3f}  Kelly (full): {rec.kelly_fraction:.4f}  "
-                         f"Stake: {rec.recommended_stake_units:.2%} / ${rec.recommended_stake_currency:.2f}  "
-                         f"Tier: {rec.confidence_tier}")
+            parts.append(
+                f"- EV per unit: {rec.ev_units:.3f}  Kelly (full): {rec.kelly_fraction:.4f}  "
+                f"Stake: {rec.recommended_stake_units:.2%} / ${rec.recommended_stake_currency:.2f}  "
+                f"Tier: {rec.confidence_tier}"
+            )
 
             # Rationale
             if rec.rationale:
@@ -191,15 +193,12 @@ class MarkdownReport:
         return "\n".join(parts)
 
     def _section_pnl(self, pnl: dict[str, Any]) -> str:
-        bankroll = pnl.get("bankroll", 0.0)
         roi = pnl.get("roi_alltime")
         roi_str = f"{roi:.1%}" if roi is not None else "N/A"
 
         wl = pnl.get("roi_wilson_lower")
         wu = pnl.get("roi_wilson_upper")
-        wilson_str = (
-            f"{wl:.1%} - {wu:.1%}" if wl is not None and wu is not None else "N/A"
-        )
+        wilson_str = f"{wl:.1%} - {wu:.1%}" if wl is not None and wu is not None else "N/A"
 
         mean_clv = pnl.get("mean_clv")
         pct_pos = pnl.get("pct_positive_clv")
@@ -243,8 +242,8 @@ class MarkdownReport:
         lines = [
             "## Model Health",
             "",
-            f"| Metric | Value |",
-            f"|--------|-------|",
+            "| Metric | Value |",
+            "|--------|-------|",
             f"| Model version | {version} |",
             f"| Last calibration snapshot | {captured} ({days_str}) |",
             f"| Brier score | {brier_str} |",
@@ -312,8 +311,8 @@ class MarkdownReport:
         lines = [
             "## API Quota",
             "",
-            f"| Metric | Value |",
-            f"|--------|-------|",
+            "| Metric | Value |",
+            "|--------|-------|",
             f"| Odds API requests MTD | {mtd_used:,} |",
             f"| Period | {year_month} |",
             "",

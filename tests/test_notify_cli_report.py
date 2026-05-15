@@ -9,14 +9,12 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from bet_advisor.notify.cli_report import MarkdownReport
 from bet_advisor.recommend.engine import Recommendation
 from bet_advisor.storage.sqlite_store import SQLiteStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

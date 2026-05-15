@@ -12,8 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from bet_advisor.main import build_parser, cli, cmd_quota, cmd_health
-
+from bet_advisor.main import build_parser, cli, cmd_health, cmd_quota
 
 # ---------------------------------------------------------------------------
 # Parser structure tests
@@ -153,11 +152,11 @@ class TestCmdQuota:
 
 class TestCmdHealth:
     def test_health_prints_output(self, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
-        from bet_advisor.storage.sqlite_store import SQLiteStore
         from bet_advisor.recommend.model_health import (
             ensure_model_health_table,
             record_model_health,
         )
+        from bet_advisor.storage.sqlite_store import SQLiteStore
 
         db_path = tmp_path / "health_test.db"
         store = SQLiteStore(db_path)

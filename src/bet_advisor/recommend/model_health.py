@@ -16,7 +16,7 @@ bet log to compute:
 from __future__ import annotations
 
 import logging
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -110,9 +110,7 @@ def compute_model_health(
     ensure_model_health_table(sqlite_store)
 
     # Latest health snapshot
-    rows = sqlite_store.query(
-        "SELECT * FROM model_health ORDER BY captured_at DESC LIMIT 1"
-    )
+    rows = sqlite_store.query("SELECT * FROM model_health ORDER BY captured_at DESC LIMIT 1")
     latest = rows[0] if rows else {}
 
     days_since_snapshot: int | None = None

@@ -97,7 +97,9 @@ def cmd_recommend(args: argparse.Namespace) -> int:
             bankroll=_get_bankroll(),
             stake_mode=os.environ.get("STAKE_MODE", "flat"),
         )
-        engine = RecommendationEngine(model=model, sqlite_store=sqlite, duckdb_store=duckdb, config=config)
+        engine = RecommendationEngine(
+            model=model, sqlite_store=sqlite, duckdb_store=duckdb, config=config
+        )
 
         recs = engine.generate_for_round(
             round_number=args.round,
@@ -119,7 +121,9 @@ def cmd_recommend(args: argparse.Namespace) -> int:
 
         # Print recommendations
         print(f"\nRecommendations for Round {args.round} -- {len(recs)} bets\n")
-        print(f"{'#':<4} {'Event':<20} {'Market':<20} {'Runner':<20} {'Odds':>6} {'Edge':>7} {'Stake%':>8} {'Tier':<12}")
+        print(
+            f"{'#':<4} {'Event':<20} {'Market':<20} {'Runner':<20} {'Odds':>6} {'Edge':>7} {'Stake%':>8} {'Tier':<12}"
+        )
         print("-" * 95)
         for i, rec in enumerate(recs, 1):
             print(
@@ -218,7 +222,7 @@ def cmd_quota(args: argparse.Namespace) -> int:
         print(f"  MTD used:        {used:,}")
         print(f"  Remaining:       {remaining:,}")
         if used >= budget:
-            print(f"  Status:          EXHAUSTED")
+            print("  Status:          EXHAUSTED")
         else:
             pct = used / budget * 100 if budget > 0 else 0
             print(f"  Usage:           {pct:.1f}%")
@@ -238,7 +242,7 @@ def cmd_health(args: argparse.Namespace) -> int:
     try:
         ensure_model_health_table(sqlite)
         health = compute_model_health(sqlite, duckdb_store=None)
-        print(f"\nModel Health Summary")
+        print("\nModel Health Summary")
         print(f"  Version:           {health.get('last_model_version') or 'unknown'}")
         print(f"  Last snapshot:     {health.get('last_captured_at') or 'never'}")
         days = health.get("days_since_snapshot")
@@ -263,7 +267,7 @@ def cmd_health(args: argparse.Namespace) -> int:
         if active_triggers:
             print(f"  Active triggers:   {', '.join(active_triggers)}")
         else:
-            print(f"  Active triggers:   None")
+            print("  Active triggers:   None")
     finally:
         sqlite.close()
 
@@ -353,7 +357,9 @@ def build_parser() -> argparse.ArgumentParser:
     # report
     p_report = subparsers.add_parser("report", help="Render the markdown report for a date.")
     p_report.add_argument("--date", required=True, help="Date in YYYY-MM-DD format.")
-    p_report.add_argument("--output-dir", default="reports", help="Output directory for the report.")
+    p_report.add_argument(
+        "--output-dir", default="reports", help="Output directory for the report."
+    )
 
     # backtest
     p_backtest = subparsers.add_parser("backtest", help="Run the walk-forward backtest.")

@@ -4,7 +4,6 @@ Tests for compute_model_health and trigger flag logic.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -16,7 +15,6 @@ from bet_advisor.recommend.model_health import (
     record_model_health,
 )
 from bet_advisor.storage.sqlite_store import SQLiteStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -85,9 +83,10 @@ def store_with_health(empty_store: SQLiteStore) -> SQLiteStore:
 
 class TestEnsureTable:
     def test_creates_table(self, empty_store: SQLiteStore) -> None:
-        tables = [r["name"] for r in empty_store.query(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )]
+        tables = [
+            r["name"]
+            for r in empty_store.query("SELECT name FROM sqlite_master WHERE type='table'")
+        ]
         assert "model_health" in tables
 
     def test_idempotent(self, empty_store: SQLiteStore) -> None:
@@ -197,9 +196,13 @@ class TestComputeDrawdown:
     def test_drawdown_computed_correctly(self) -> None:
         # Win 8 (net), then lose 10, then win 8
         bets = [
-            {"stake": 10.0, "payout": 18.0, "status": "won"},   # cumulative = 8, peak = 8
-            {"stake": 10.0, "payout": None, "status": "lost"},   # cumulative = -2, peak = 8, drawdown = 10/8 = 125%
-            {"stake": 10.0, "payout": 18.0, "status": "won"},   # cumulative = 6
+            {"stake": 10.0, "payout": 18.0, "status": "won"},  # cumulative = 8, peak = 8
+            {
+                "stake": 10.0,
+                "payout": None,
+                "status": "lost",
+            },  # cumulative = -2, peak = 8, drawdown = 10/8 = 125%
+            {"stake": 10.0, "payout": 18.0, "status": "won"},  # cumulative = 6
         ]
         dd = _compute_drawdown(bets)
         assert dd > 0

@@ -4,7 +4,7 @@ Stats-driven AFL betting advisor. Private research project.
 
 This is **not** an arbitrage system (see [match-bet](https://github.com/) for that). This system builds statistical models, computes expected value against bookmaker prices, and produces paper-trading recommendations with rigorous evaluation (CLV, Brier, calibration).
 
-**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete. Phase 4 (disposals model + walk-forward backtest) complete.
+**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete. Phase 4 (disposals model + walk-forward backtest) complete. Phase 5 (recommendation engine + scheduler + markdown report) complete.
 
 ## What it does
 
@@ -40,6 +40,23 @@ pip install -e ".[dev]"
 Optimise for accuracy, explainability, calibration, sustainable bankroll management.
 Do not optimise for reckless strategies, fake certainty, or black-box outputs.
 Probabilistic and uncertainty-aware throughout.
+
+## Daily run
+
+```bash
+cp .env.example .env
+# fill in ODDS_API_KEY and other keys
+source .venv/bin/activate
+bet-advisor schedule
+```
+
+Use `--dry-run` to preview the job schedule without starting:
+
+```bash
+bet-advisor schedule --dry-run
+```
+
+See [`docs/operations.md`](docs/operations.md) for the full CLI reference, environment variable table, and daily report format.
 
 ## License
 

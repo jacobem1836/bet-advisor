@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -95,6 +96,17 @@ CREATE TABLE IF NOT EXISTS model_versions (
     training_window_end     TEXT NOT NULL,
     notes                   TEXT
 );
+
+CREATE TABLE IF NOT EXISTS quota_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_tag TEXT NOT NULL,
+    date TEXT NOT NULL,
+    requests_used INTEGER NOT NULL DEFAULT 0,
+    endpoint TEXT,
+    recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_quota_usage_project_date ON quota_usage(project_tag, date);
 """
 
 
@@ -361,6 +373,39 @@ class SQLiteStore:
             ),
         )
         self.con.commit()
+
+    # ------------------------------------------------------------------
+    # Quota usage
+
+    def record_quota_usage(
+        self,
+        project_tag: str,
+        requests_used: int,
+        endpoint: str | None = None,
+    ) -> None:
+        """Record Odds API quota consumption for budget tracking."""
+        date = datetime.now(UTC).date().isoformat()
+        self.con.execute(
+            """
+            INSERT INTO quota_usage
+                (project_tag, date, requests_used, endpoint, recorded_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            (project_tag, date, requests_used, endpoint),
+        )
+        self.con.commit()
+
+    def get_month_to_date_usage(self, project_tag: str, year_month: str) -> int:
+        """Return total requests_used for project_tag where date LIKE year_month||'%'."""
+        row = self.con.execute(
+            """
+            SELECT COALESCE(SUM(requests_used), 0) as total
+            FROM quota_usage
+            WHERE project_tag = ? AND date LIKE ?
+            """,
+            (project_tag, f"{year_month}%"),
+        ).fetchone()
+        return row["total"] if row else 0
 
     # ------------------------------------------------------------------
     # General query

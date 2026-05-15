@@ -234,3 +234,48 @@ class TestModelVersions:
             )
         rows = tmp_store.query("SELECT COUNT(*) AS cnt FROM model_versions")
         assert rows[0]["cnt"] == 1
+
+
+class TestQuotaUsage:
+    def test_record_quota_usage_inserts_row(self, tmp_store: SQLiteStore) -> None:
+        tmp_store.record_quota_usage(
+            project_tag="bet-advisor",
+            requests_used=42,
+            endpoint="sports",
+        )
+        rows = tmp_store.query("SELECT requests_used, endpoint FROM quota_usage")
+        assert len(rows) == 1
+        assert rows[0]["requests_used"] == 42
+        assert rows[0]["endpoint"] == "sports"
+
+    def test_get_month_to_date_usage_sums_correctly(self, tmp_store: SQLiteStore) -> None:
+        # Insert 3 rows in 2026-05
+        for i in range(1, 4):
+            tmp_store.con.execute(
+                """
+                INSERT INTO quota_usage
+                    (project_tag, date, requests_used, endpoint, recorded_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """,
+                ("bet-advisor", f"2026-05-{i:02d}", 100, "sports"),
+            )
+        tmp_store.con.commit()
+
+        # Insert 1 row in 2026-06 (different month)
+        tmp_store.con.execute(
+            """
+            INSERT INTO quota_usage
+                (project_tag, date, requests_used, endpoint, recorded_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            ("bet-advisor", "2026-06-01", 100, "sports"),
+        )
+        tmp_store.con.commit()
+
+        # Assert 2026-05 total is 300 (3 rows * 100)
+        total = tmp_store.get_month_to_date_usage("bet-advisor", "2026-05")
+        assert total == 300
+
+        # Assert 2026-06 total is 100 (1 row * 100)
+        total = tmp_store.get_month_to_date_usage("bet-advisor", "2026-06")
+        assert total == 100

@@ -70,9 +70,7 @@ class BetfairClient:
             ) from exc
 
         if not all([self._username, self._password, self._app_key]):
-            raise ValueError(
-                "username, password, and app_key must all be set before login"
-            )
+            raise ValueError("username, password, and app_key must all be set before login")
 
         self._trading = betfairlightweight.APIClient(
             username=self._username,

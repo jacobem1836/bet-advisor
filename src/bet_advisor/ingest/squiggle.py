@@ -87,9 +87,7 @@ class SquiggleClient:
         """
         data = self._get({"q": "tips", "year": year, "round": round_num})
         tips: list[dict] = data.get("tips", [])
-        logger.info(
-            "Squiggle: %d tips for %d round %d", len(tips), year, round_num
-        )
+        logger.info("Squiggle: %d tips for %d round %d", len(tips), year, round_num)
         return tips
 
     def fetch_sources(self) -> list[dict]:

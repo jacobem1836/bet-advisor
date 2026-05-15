@@ -29,7 +29,6 @@ from __future__ import annotations
 import logging
 import os
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -37,7 +36,6 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from bet_advisor.recommend.engine import RecommendationConfig, RecommendationEngine
 from bet_advisor.recommend.model_health import compute_model_health, ensure_model_health_table
 from bet_advisor.recommend.pnl import compute_pnl_snapshot
 from bet_advisor.storage.sqlite_store import SQLiteStore
@@ -78,7 +76,10 @@ def _quota_exhausted(sqlite_store: SQLiteStore, project_tag: str, project_share:
     if used >= project_share:
         logger.warning(
             "Quota exhausted: %d / %d requests used for %s in %s",
-            used, project_share, project_tag, year_month,
+            used,
+            project_share,
+            project_tag,
+            year_month,
         )
         return True
     return False
@@ -199,12 +200,9 @@ class Scheduler:
             from bet_advisor.ingest.odds_api import OddsAPIClient
 
             client = OddsAPIClient(api_key=cfg["odds_api_key"])
-            events = client.get_events()
-            _record_api_call(sqlite, cfg["odds_api_project_tag"], "get_events")
-
-            for event in events:
-                odds_data = client.get_odds(event_id=event.event_id)
-                _record_api_call(sqlite, cfg["odds_api_project_tag"], "get_odds")
+            all_odds = client.fetch_odds()
+            _record_api_call(sqlite, cfg["odds_api_project_tag"], "fetch_odds")
+            for odds_data in all_odds:
                 _store_odds_snapshot(sqlite, odds_data)
 
         except Exception as exc:
@@ -226,10 +224,12 @@ class Scheduler:
             from bet_advisor.ingest.odds_api import OddsAPIClient
 
             client = OddsAPIClient(api_key=cfg["odds_api_key"])
-            for match in _matches_today(sqlite):
-                odds_data = client.get_odds(event_id=match["event_id"])
-                _record_api_call(sqlite, cfg["odds_api_project_tag"], "get_odds_high")
-                _store_odds_snapshot(sqlite, odds_data)
+            all_odds = client.fetch_odds()
+            _record_api_call(sqlite, cfg["odds_api_project_tag"], "fetch_odds_high")
+            today_event_ids = {m["event_id"] for m in _matches_today(sqlite)}
+            for odds_data in all_odds:
+                if odds_data.event_id in today_event_ids:
+                    _store_odds_snapshot(sqlite, odds_data)
 
         except Exception as exc:
             logger.exception("refresh_odds_high_freq failed: %s", exc)
@@ -253,17 +253,17 @@ class Scheduler:
             logger.debug("refresh_odds_final_min: no active signals, skipping")
             return
 
-        logger.info(
-            "refresh_odds_final_min: polling %d tracked events", len(active_event_ids)
-        )
+        logger.info("refresh_odds_final_min: polling %d tracked events", len(active_event_ids))
         try:
             from bet_advisor.ingest.odds_api import OddsAPIClient
 
             client = OddsAPIClient(api_key=cfg["odds_api_key"])
-            for event_id in active_event_ids:
-                odds_data = client.get_odds(event_id=event_id)
-                _record_api_call(sqlite, cfg["odds_api_project_tag"], "get_odds_final")
-                _store_odds_snapshot(sqlite, odds_data)
+            all_odds = client.fetch_odds()
+            _record_api_call(sqlite, cfg["odds_api_project_tag"], "fetch_odds_final")
+            active_set = set(active_event_ids)
+            for odds_data in all_odds:
+                if odds_data.event_id in active_set:
+                    _store_odds_snapshot(sqlite, odds_data)
 
         except Exception as exc:
             logger.exception("refresh_odds_final_min failed: %s", exc)
@@ -277,7 +277,7 @@ class Scheduler:
 
             client = SquiggleClient()
             year = datetime.now(_BRISBANE).year
-            games = client.get_games(year=year)
+            games = client.fetch_games(year=year)
             for game in games:
                 if game.get("complete", 0) == 100:
                     event_id = str(game.get("id", ""))
@@ -304,13 +304,10 @@ class Scheduler:
         """08:00 AEST daily report generation."""
         sqlite = self._get_sqlite()
         cfg = self._config
-        from datetime import date
 
         yesterday = datetime.now(_BRISBANE).date()
         # Report covers today's recommendations
         from bet_advisor.notify import write_markdown_card
-        from bet_advisor.recommend.model_health import compute_model_health
-        from bet_advisor.recommend.pnl import compute_pnl_snapshot
 
         logger.info("daily_report: generating report for %s", yesterday.isoformat())
         try:
@@ -397,8 +394,8 @@ class Scheduler:
 
     def print_schedule(self) -> None:
         """Print the planned schedule without starting the scheduler."""
-        print(f"Scheduler configuration (dry-run mode):")
-        print(f"  Timezone: Australia/Brisbane (AEST, UTC+10)")
+        print("Scheduler configuration (dry-run mode):")
+        print("  Timezone: Australia/Brisbane (AEST, UTC+10)")
         print(f"  Project tag: {self._config['odds_api_project_tag']}")
         print(f"  Monthly budget: {self._config['odds_api_monthly_budget']} requests")
         print(f"  Project share: {self._config['odds_api_project_share']} requests")

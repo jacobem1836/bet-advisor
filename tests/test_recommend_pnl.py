@@ -14,7 +14,6 @@ import pytest
 from bet_advisor.recommend.pnl import compute_pnl_snapshot
 from bet_advisor.storage.sqlite_store import SQLiteStore
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -54,14 +53,44 @@ def store_with_bets(tmp_path: Path) -> SQLiteStore:
     # Insert bets spread across today, this week, this month, older
     bet_configs = [
         # today -- two bets
-        {"placed_at": f"{today.isoformat()}T10:00:00", "stake": 10.0, "payout": 18.0, "status": "won", "clv_pct": 0.02},
-        {"placed_at": f"{today.isoformat()}T11:00:00", "stake": 10.0, "payout": None, "status": "lost", "clv_pct": -0.01},
+        {
+            "placed_at": f"{today.isoformat()}T10:00:00",
+            "stake": 10.0,
+            "payout": 18.0,
+            "status": "won",
+            "clv_pct": 0.02,
+        },
+        {
+            "placed_at": f"{today.isoformat()}T11:00:00",
+            "stake": 10.0,
+            "payout": None,
+            "status": "lost",
+            "clv_pct": -0.01,
+        },
         # this week (3 days ago)
-        {"placed_at": f"{(today - timedelta(days=3)).isoformat()}T10:00:00", "stake": 10.0, "payout": 18.0, "status": "won", "clv_pct": 0.03},
+        {
+            "placed_at": f"{(today - timedelta(days=3)).isoformat()}T10:00:00",
+            "stake": 10.0,
+            "payout": 18.0,
+            "status": "won",
+            "clv_pct": 0.03,
+        },
         # this month (10 days ago)
-        {"placed_at": f"{(today - timedelta(days=10)).isoformat()}T10:00:00", "stake": 10.0, "payout": None, "status": "lost", "clv_pct": None},
+        {
+            "placed_at": f"{(today - timedelta(days=10)).isoformat()}T10:00:00",
+            "stake": 10.0,
+            "payout": None,
+            "status": "lost",
+            "clv_pct": None,
+        },
         # older (last month)
-        {"placed_at": "2026-04-01T10:00:00", "stake": 10.0, "payout": 18.0, "status": "won", "clv_pct": 0.04},
+        {
+            "placed_at": "2026-04-01T10:00:00",
+            "stake": 10.0,
+            "payout": 18.0,
+            "status": "won",
+            "clv_pct": 0.04,
+        },
     ]
 
     for cfg in bet_configs:

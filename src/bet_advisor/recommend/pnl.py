@@ -8,7 +8,7 @@ Wilson confidence interval, mean CLV, and percentage of bets with positive CLV.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -128,7 +128,5 @@ def _wilson_ci(n_positive: int, n_total: int, alpha: float = 0.05) -> tuple[floa
     p_hat = n_positive / n_total
     denominator = 1.0 + z**2 / n_total
     centre = (p_hat + z**2 / (2 * n_total)) / denominator
-    spread = (
-        z * math.sqrt(p_hat * (1 - p_hat) / n_total + z**2 / (4 * n_total**2))
-    ) / denominator
+    spread = (z * math.sqrt(p_hat * (1 - p_hat) / n_total + z**2 / (4 * n_total**2))) / denominator
     return max(0.0, centre - spread), min(1.0, centre + spread)

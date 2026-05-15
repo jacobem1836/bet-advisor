@@ -249,7 +249,7 @@ class RecommendationEngine:
             grouped.setdefault(key, []).append(line)
 
         for (market, bookmaker), lines in grouped.items():
-            odds_list = [l["decimal_odds"] for l in lines]
+            odds_list = [ln["decimal_odds"] for ln in lines]
             if len(odds_list) < 2:
                 # Cannot devig a single-runner market; skip
                 continue
@@ -312,8 +312,12 @@ class RecommendationEngine:
 
                 # Counterarguments
                 counterarguments = self._build_counterarguments(
-                    bet_edge, float(model_prob), float(model_prob_low), float(model_prob_high),
-                    decimal_odds, tier
+                    bet_edge,
+                    float(model_prob),
+                    float(model_prob_low),
+                    float(model_prob_high),
+                    decimal_odds,
+                    tier,
                 )
 
                 model_version = getattr(self._model, "version_hash", "unknown")
@@ -401,28 +405,36 @@ class RecommendationEngine:
             if total_event_count >= cfg.max_bets_per_event:
                 logger.debug(
                     "Dropping %s/%s -- per-event bet count cap (%d)",
-                    eid, rec.runner, cfg.max_bets_per_event,
+                    eid,
+                    rec.runner,
+                    cfg.max_bets_per_event,
                 )
                 continue
 
             if total_day_count >= cfg.max_bets_per_day:
                 logger.debug(
                     "Dropping %s/%s -- daily bet count cap (%d)",
-                    eid, rec.runner, cfg.max_bets_per_day,
+                    eid,
+                    rec.runner,
+                    cfg.max_bets_per_day,
                 )
                 break  # recs sorted by edge; remaining will be worse
 
             if total_event_units + rec.recommended_stake_units > cfg.max_exposure_per_event_units:
                 logger.debug(
                     "Dropping %s/%s -- per-event unit exposure cap (%.2f)",
-                    eid, rec.runner, cfg.max_exposure_per_event_units,
+                    eid,
+                    rec.runner,
+                    cfg.max_exposure_per_event_units,
                 )
                 continue
 
             if total_day_units + rec.recommended_stake_units > cfg.max_exposure_per_day_units:
                 logger.debug(
                     "Dropping %s/%s -- daily unit exposure cap (%.2f)",
-                    eid, rec.runner, cfg.max_exposure_per_day_units,
+                    eid,
+                    rec.runner,
+                    cfg.max_exposure_per_day_units,
                 )
                 break
 
@@ -691,11 +703,15 @@ class RecommendationEngine:
         Returns an empty dict if no features are available.
         """
         try:
-            rows = self._duckdb.query(
-                "SELECT * FROM player_features WHERE event_id = ?",
-                (event_id,),
-            ) if hasattr(self._duckdb, "query") else []
-            if rows:
+            rows = (
+                self._duckdb.query(
+                    "SELECT * FROM player_features WHERE event_id = ?",
+                    [event_id],
+                )
+                if hasattr(self._duckdb, "query")
+                else []
+            )
+            if rows is not None and len(rows) > 0:
                 return dict(rows[0])
         except Exception as exc:
             logger.debug("Could not fetch features for %s: %s", event_id, exc)

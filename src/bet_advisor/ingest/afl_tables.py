@@ -135,9 +135,7 @@ def fetch_match_history(
     import requests  # type: ignore[import]
 
     session = requests.Session()
-    session.headers["User-Agent"] = (
-        "bet-advisor/dev (jacobemarriott@icloud.com) personal-research"
-    )
+    session.headers["User-Agent"] = "bet-advisor/dev (jacobemarriott@icloud.com) personal-research"
 
     frames: list[pd.DataFrame] = []
     for year in range(start_year, end_year + 1):
@@ -178,8 +176,17 @@ def _normalise_matches(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 
     # Ensure required columns exist
-    for col in ["match_id", "season", "round", "date", "venue",
-                "home_team", "away_team", "home_score", "away_score"]:
+    for col in [
+        "match_id",
+        "season",
+        "round",
+        "date",
+        "venue",
+        "home_team",
+        "away_team",
+        "home_score",
+        "away_score",
+    ]:
         if col not in df.columns:
             df[col] = None
 
@@ -188,8 +195,18 @@ def _normalise_matches(df: pd.DataFrame) -> pd.DataFrame:
         df["completed"] = df["home_score"].notna() & df["away_score"].notna()
 
     return df[
-        ["match_id", "season", "round", "date", "venue",
-         "home_team", "away_team", "home_score", "away_score", "completed"]
+        [
+            "match_id",
+            "season",
+            "round",
+            "date",
+            "venue",
+            "home_team",
+            "away_team",
+            "home_score",
+            "away_score",
+            "completed",
+        ]
     ]
 
 
@@ -233,9 +250,7 @@ def fetch_player_history(
 
         if frames:
             combined = pd.concat(frames, ignore_index=True)
-            logger.info(
-                "fetch_player_history: pyAFL returned %d rows", len(combined)
-            )
+            logger.info("fetch_player_history: pyAFL returned %d rows", len(combined))
             return _normalise_player_stats(combined)
     except ImportError:
         logger.info("pyAFL not importable for player history")
@@ -269,17 +284,43 @@ def _normalise_player_stats(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 
     for col in [
-        "match_id", "player_id", "player_name", "team", "position",
-        "time_on_ground_pct", "disposals", "kicks", "handballs", "marks",
-        "tackles", "goals", "behinds", "clearances", "fantasy_points", "supercoach_points",
+        "match_id",
+        "player_id",
+        "player_name",
+        "team",
+        "position",
+        "time_on_ground_pct",
+        "disposals",
+        "kicks",
+        "handballs",
+        "marks",
+        "tackles",
+        "goals",
+        "behinds",
+        "clearances",
+        "fantasy_points",
+        "supercoach_points",
     ]:
         if col not in df.columns:
             df[col] = None
 
     return df[
         [
-            "match_id", "player_id", "player_name", "team", "position",
-            "time_on_ground_pct", "disposals", "kicks", "handballs", "marks",
-            "tackles", "goals", "behinds", "clearances", "fantasy_points", "supercoach_points",
+            "match_id",
+            "player_id",
+            "player_name",
+            "team",
+            "position",
+            "time_on_ground_pct",
+            "disposals",
+            "kicks",
+            "handballs",
+            "marks",
+            "tackles",
+            "goals",
+            "behinds",
+            "clearances",
+            "fantasy_points",
+            "supercoach_points",
         ]
     ]

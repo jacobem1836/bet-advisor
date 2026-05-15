@@ -57,9 +57,7 @@ def archive_snapshot(
 
     out_path = out_dir / f"{time_str}.parquet"
     snapshot_df.to_parquet(out_path, index=False, engine="pyarrow")
-    logger.info(
-        "Archived %d odds rows to %s", len(snapshot_df), out_path
-    )
+    logger.info("Archived %d odds rows to %s", len(snapshot_df), out_path)
     return out_path
 
 

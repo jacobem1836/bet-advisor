@@ -4,7 +4,7 @@ Stats-driven AFL betting advisor. Private research project.
 
 This is **not** an arbitrage system (see [match-bet](https://github.com/) for that). This system builds statistical models, computes expected value against bookmaker prices, and produces paper-trading recommendations with rigorous evaluation (CLV, Brier, calibration).
 
-**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete. Phase 4 (disposals model + walk-forward backtest) complete. Phase 5 (recommendation engine + scheduler + markdown report) complete.
+**Status:** Phase 1 (research) complete. Phase 2 (data foundation) complete. Phase 3 (EV framework) complete. Phase 4 (disposals model + walk-forward backtest) complete. Phase 5 (recommendation engine + scheduler + markdown report) complete. Phase 5.5 (CLV reference adapter) complete.
 
 ## What it does
 
@@ -12,6 +12,8 @@ Targets AFL only at MVP. Primary market: player disposals. Secondary: totals, H2
 Reads odds from The Odds API and Betfair Exchange. Models in scikit-learn.
 Stores in DuckDB + SQLite + Parquet.
 Outputs daily markdown recommendations.
+CLV measured against a multi-book consensus close (Sportsbet, TAB, Ladbrokes, Pointsbet, Betr),
+with optional Betfair Exchange delayed-key cross-check for match-level prices.
 Tracks every prediction against the closing line.
 
 ## What it does not do

@@ -499,7 +499,9 @@ class SQLiteStore:
         """
         if status not in ("won", "lost", "void"):
             raise ValueError(f"Invalid status: {status!r}")
-        books_json = json.dumps(clv_reference_books_used) if clv_reference_books_used is not None else None
+        books_json = (
+            json.dumps(clv_reference_books_used) if clv_reference_books_used is not None else None
+        )
         self.con.execute(
             """
             UPDATE bets

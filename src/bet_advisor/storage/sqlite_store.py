@@ -134,6 +134,12 @@ _BETS_PHASE3_COLUMNS: list[tuple[str, str]] = [
     ("staking_strategy", "TEXT"),
 ]
 
+# Phase 5.5 columns: CLV reference source tracking.
+_BETS_PHASE55_COLUMNS: list[tuple[str, str]] = [
+    ("clv_reference_source", "TEXT"),
+    ("clv_reference_books_used", "TEXT"),
+]
+
 
 class SQLiteStore:
     """Operational store backed by SQLite with WAL mode and foreign key enforcement.
@@ -156,6 +162,7 @@ class SQLiteStore:
         self._con.executescript(_PRAGMAS)
         self._con.executescript(_DDL)
         self._apply_phase3_migrations()
+        self._apply_phase55_migrations()
         self._con.commit()
         logger.info("SQLite connected: %s", self._db_path)
         return self
@@ -165,6 +172,15 @@ class SQLiteStore:
         assert self._con is not None
         existing = {row[1] for row in self._con.execute("PRAGMA table_info(bets)").fetchall()}
         for col_name, col_type in _BETS_PHASE3_COLUMNS:
+            if col_name not in existing:
+                self._con.execute(f"ALTER TABLE bets ADD COLUMN {col_name} {col_type}")
+                logger.debug("Added column bets.%s (%s)", col_name, col_type)
+
+    def _apply_phase55_migrations(self) -> None:
+        """Idempotently add Phase 5.5 CLV reference columns to the bets table."""
+        assert self._con is not None
+        existing = {row[1] for row in self._con.execute("PRAGMA table_info(bets)").fetchall()}
+        for col_name, col_type in _BETS_PHASE55_COLUMNS:
             if col_name not in existing:
                 self._con.execute(f"ALTER TABLE bets ADD COLUMN {col_name} {col_type}")
                 logger.debug("Added column bets.%s (%s)", col_name, col_type)
@@ -452,6 +468,8 @@ class SQLiteStore:
         closing_odds_opp: float | None,
         clv_pct: float | None,
         settled_at: str,
+        clv_reference_source: str | None = None,
+        clv_reference_books_used: list[str] | None = None,
     ) -> None:
         """Update a bet with post-settlement data including CLV and closing odds.
 
@@ -471,14 +489,23 @@ class SQLiteStore:
             Computed CLV as a decimal (e.g. 0.025 for +2.5pp).
         settled_at:
             ISO 8601 timestamp of settlement.
+        clv_reference_source:
+            Source identifier for the CLV reference (e.g.
+            ``"consensus:sportsbet,tab,ladbrokes"`` or ``"betfair_delayed"``).
+            Stored for audit and reporting. Optional.
+        clv_reference_books_used:
+            List of bookmaker keys that contributed to the CLV reference.
+            Serialised as JSON. Optional.
         """
         if status not in ("won", "lost", "void"):
             raise ValueError(f"Invalid status: {status!r}")
+        books_json = json.dumps(clv_reference_books_used) if clv_reference_books_used is not None else None
         self.con.execute(
             """
             UPDATE bets
             SET status=?, payout=?, closing_odds_own=?, closing_odds_opp=?,
-                clv_pct=?, settled_at=?
+                clv_pct=?, settled_at=?,
+                clv_reference_source=?, clv_reference_books_used=?
             WHERE id=?
             """,
             (
@@ -488,6 +515,8 @@ class SQLiteStore:
                 closing_odds_opp,
                 clv_pct,
                 settled_at,
+                clv_reference_source,
+                books_json,
                 bet_id,
             ),
         )

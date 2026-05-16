@@ -54,6 +54,7 @@ class MarkdownReport:
         recs: list[Recommendation],
         pnl_snapshot: dict[str, Any],
         model_health: dict[str, Any],
+        clv_reference_summary: dict[str, Any] | None = None,
     ) -> str:
         """Render the daily report as a markdown string.
 
@@ -77,6 +78,7 @@ class MarkdownReport:
         sections.append(self._section_top_recs_table(recs))
         sections.append(self._section_rec_details(recs))
         sections.append(self._section_pnl(pnl_snapshot))
+        sections.append(self._section_clv_reference(clv_reference_summary))
         sections.append(self._section_model_health(model_health))
         sections.append(self._section_risk_flags(model_health, pnl_snapshot, recs))
         sections.append(self._section_quota(report_date))
@@ -88,6 +90,7 @@ class MarkdownReport:
         recs: list[Recommendation],
         pnl_snapshot: dict[str, Any],
         model_health: dict[str, Any],
+        clv_reference_summary: dict[str, Any] | None = None,
     ) -> Path:
         """Render and write the daily report to disk.
 
@@ -106,7 +109,7 @@ class MarkdownReport:
         -------
         Path to the written file.
         """
-        md = self.render_daily(report_date, recs, pnl_snapshot, model_health)
+        md = self.render_daily(report_date, recs, pnl_snapshot, model_health, clv_reference_summary)
         self._output_dir.mkdir(parents=True, exist_ok=True)
         path = self._output_dir / f"{report_date.isoformat()}.md"
         path.write_text(md, encoding="utf-8")
@@ -220,6 +223,59 @@ class MarkdownReport:
             f"**Mean CLV (settled):** {clv_str}  **% Positive CLV:** {pct_clv_str}  "
             f"**n settled with CLV:** {pnl.get('n_settled', 0)}",
         ]
+        return "\n".join(lines)
+
+    def _section_clv_reference(self, clv_ref: dict[str, Any] | None) -> str:
+        """Render the CLV reference summary section.
+
+        Parameters
+        ----------
+        clv_ref:
+            Optional dict with keys:
+            - ``mode`` (str): resolver mode, e.g. ``"multi_book_consensus"``
+            - ``books_used`` (list[str]): books that contributed to the reference
+            - ``n_settled_with_fallback`` (int): how many settled bets used a fallback
+            - ``fallback_warnings`` (list[str]): warning strings from fallback events
+
+        If None, renders a default message showing the system default.
+        """
+        if clv_ref is None:
+            lines = [
+                "## CLV Reference",
+                "",
+                "CLV reference: multi_book_consensus (default) across "
+                "{sportsbet, tab, ladbrokes, pointsbet, betr}. "
+                "No settled bets with CLV data yet.",
+            ]
+            return "\n".join(lines)
+
+        mode = clv_ref.get("mode", "multi_book_consensus")
+        books = clv_ref.get("books_used", [])
+        books_str = "{" + ", ".join(books) + "}" if books else "(none)"
+        n_fallback = clv_ref.get("n_settled_with_fallback", 0)
+        fallback_warnings = clv_ref.get("fallback_warnings", [])
+
+        lines = [
+            "## CLV Reference",
+            "",
+            f"CLV reference: **{mode}** across {books_str}",
+        ]
+
+        if n_fallback > 0:
+            lines.append("")
+            lines.append(
+                f"**{n_fallback} settled bet(s) used a fallback reference source.** "
+                "Fallback occurs when fewer books than the minimum are available or "
+                "Betfair volume is below the configured threshold."
+            )
+            if fallback_warnings:
+                lines.append("")
+                lines.append("Fallback details:")
+                for w in fallback_warnings[:5]:  # cap at 5 to keep report compact
+                    lines.append(f"- {w}")
+                if len(fallback_warnings) > 5:
+                    lines.append(f"- ... and {len(fallback_warnings) - 5} more.")
+
         return "\n".join(lines)
 
     def _section_model_health(self, health: dict[str, Any]) -> str:

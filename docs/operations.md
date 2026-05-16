@@ -152,3 +152,51 @@ Reports are written to `REPORTS_DIR/<YYYY-MM-DD>.md`. Each report contains:
 | DuckDB analytical store (player stats, features) | `DUCKDB_PATH` |
 | Fitted model | `MODEL_PATH` |
 | Parquet archives | `data/parquet/` |
+
+---
+
+## Bookmaker Accounts
+
+bet-advisor **recommends** bets; Jacob places them manually. No auto-betting.
+
+### Restriction Tolerance Ranking
+
+Open accounts at the top of this list early, before any winning record exists. Accounts
+at highly restrictive books become unusable for meaningful stakes over time.
+
+| Rank | Bookmaker | Tolerance | Notes |
+|------|-----------|-----------|-------|
+| 1 | BetRight | High | Independently AU-owned (NT licence). Community-cited as winner-tolerant. |
+| 2 | Unibet | Medium | Kindred Group. Higher tolerance than Sportsbet/Ladbrokes. |
+| 3 | Betr (BlueBet) | Medium | Acquired by BlueBet 2024; smaller operator, slower to restrict. |
+| 4 | Picklebet | Medium | Small operator, esports-focused. |
+| 5 | Bet365 AU | Medium | UK-origin corporate. Restricts winners but more gradually on sports. |
+| 6 | Pointsbet | Medium-Low | Corporate, AFL betting partner. Restricts winning sports bettors. |
+| 7 | PlayUp | Medium | Small AU operator. |
+| 8 | TAB | Low | Community reports banning from multis and restricting sports stakes. |
+| 9 | Neds | Low | Shared ownership with Ladbrokes. Same restriction culture. |
+| 10 | Ladbrokes AU | Very Low | Community consensus: worst restriction culture in market. |
+| 11 | Sportsbet | Very Low | Flutter/Paddy Power. Fastest to restrict, especially on player props. |
+
+**Source:** `research/06_betfair_alternatives.md` §B1.
+
+### Key Points
+
+- **No minimum bet law for AFL fixed-odds sports.** Racing NSW/VIC minimum bet laws apply
+  to racing only. AFL player prop bookmakers can and do restrict winners without legal consequence.
+- **Open one account per bookmaker in your own name.** Multi-account at the same bookmaker
+  violates their terms of service; separate accounts at different bookmakers is legal.
+- **Keep dormant accounts active.** Place small recreational bets occasionally to avoid
+  dormancy flags. Accounts become harder to reopen once flagged.
+- **Betfair Exchange is the long-term execution venue.** The exchange cannot restrict bet
+  sizes (it matches orders, not books them). Requires the live key (~AUD 1000). Deferred to
+  Phase 9 after model proves edge.
+
+### Trigger for Buying the Betfair Live Key
+
+After a full AFL season of paper trading with statistically significant positive CLV
+(sustained > 2% mean CLV across 200+ bets), the economic case for the live key is clear.
+The live key unlocks both a superior CLV reference (exchange closing prices) and unrestricted
+bet placement via Phase 9 execution streaming.
+
+See `research/06_betfair_alternatives.md` §D for the full reframing of the live key cost.

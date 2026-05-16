@@ -92,7 +92,7 @@ On **AFL totals**, weak yes — weather-adjusted totals have theoretical edge (1
 |-------|--------|-----|
 | Language | Python 3.12+ | Ecosystem, your default |
 | Odds (live) | The Odds API (paid, Standard tier ~$79/mo) | Coverage of Sportsbet AFL incl. player props, reliable, no ToS landmines |
-| Odds (sharp ref) | Betfair Exchange via `betfairlightweight` | Free with AU account, sharper than fixed-odds books, closing line truth |
+| Odds (sharp ref) | Betfair Exchange free delayed key via `betfairlightweight` | Free delayed key reads closing prices (1-180 s delay); live key (~AUD 1000) deferred until model proves edge |
 | Historical odds | AusSportsBetting XLSX + Betfair AU CSVs | Required for honest backtest, both free |
 | Match results | AFL Tables via `pyAFL` | Free, 1897+ |
 | Player stats | AFL Tables + FootyWire scrape | Free, disposals/marks/tackles etc. |
@@ -128,6 +128,7 @@ Per the odds ingestion research, **`collector/odds_fetcher.py` (`OddsAPIClient`)
 4. **Marvel Stadium is indoor when roof closed.** Weather features must zero out by venue + match.
 5. **Sample size reality.** First 50–100 bets are noise. Do not adjust model based on early results. CLV is the only signal worth watching early.
 6. **AU legal posture.** Private use, no auto-betting, no redistribution of bookmaker data, no scraping Sportsbet directly. Use The Odds API as the contracted intermediary.
+7. **CLV reference source (Phase 5.5).** The primary CLV reference is a multi-book consensus close: power devig applied per AU book (Sportsbet, TAB, Ladbrokes, Pointsbet, Betr), then an overround-weighted average of runner probabilities across books. This is less precise than Betfair Exchange closing prices by roughly 1-3 percentage points for match-odds markets, but is tolerable for proving model edge (require sustained CLV > 2% before concluding real skill). The Betfair Exchange free delayed key (1-180 s delay) supplements this for match-level cross-checks. The live Betfair key (~AUD 1000) is deferred until positive CLV is confirmed over a full AFL season. See `research/06_betfair_alternatives.md` for the full analysis.
 
 ---
 
@@ -135,7 +136,7 @@ Per the odds ingestion research, **`collector/odds_fetcher.py` (`OddsAPIClient`)
 
 Three metrics start tracking from bet #1:
 
-1. **CLV%** – devigged closing implied prob vs your bet's implied prob. Positive CLV consistently → real skill. Single most important number.
+1. **CLV%** – devigged closing implied prob vs your bet's implied prob. Positive CLV consistently implies real skill. Single most important number.
 2. **Brier score** – per market, weekly rolling. Target < 0.25 on H2H, < 0.22 on disposals.
 3. **Bankroll drawdown** – max from peak. Hard halt at 25%.
 
@@ -144,6 +145,16 @@ Weekly: ECE (expected calibration error), reliability diagram, ROI with Wilson C
 Monthly: full calibration audit; recalibrate (Platt) if ECE > 0.015.
 
 Triggers for model pause: ECE > 0.02 post-recalibration, drawdown > 25%, CLV < 0 over rolling 100 bets, Brier deteriorates two consecutive months.
+
+### CLV reference close (Phase 5.5)
+
+CLV is measured against the **multi-book consensus close** as the primary reference: power devig applied to each AU recreational book's closing line independently, then an overround-weighted average of runner probabilities across Sportsbet, TAB, Ladbrokes, Pointsbet, and Betr. Lower-overround books contribute more weight.
+
+The Betfair Exchange free delayed key provides an optional cross-check for match-level closing prices. Use it for H2H markets where Betfair volume is sufficient (>AUD 1000 matched). For AFL player prop markets, exchange liquidity is often thin, making the multi-book consensus a comparable or better reference.
+
+The reference source used for each settled bet is recorded in `bets.clv_reference_source` and `bets.clv_reference_books_used` for audit. The daily report shows the active reference mode and flags any bets where a fallback was used.
+
+**Interpretation note:** multi-book consensus close is estimated to be 1-3 percentage points less precise than Betfair Exchange closing prices for match-odds markets. Require a sustained CLV of > 2% before concluding the model has real edge. A model consistently beating the consensus by > 2-3% across 200+ bets has demonstrated skill sufficient to justify purchasing the Betfair live key for Phase 9.
 
 ---
 
@@ -272,3 +283,21 @@ Sequenced by dependency, not time.
 - `research/03_odds_ingestion.md` – Sportsbet/The Odds API/Betfair, match-bet reuse
 - `research/04_ev_staking_evaluation.md` – devig, EV, Kelly, calibration, backtest, CLV
 - `research/05_architecture.md` – signum analysis, agent-vs-Python decision, storage/orchestration
+
+## 11. CLV reference alternatives (Phase 5.5)
+
+`research/06_betfair_alternatives.md` documents the full investigation into CLV reference
+sources following the decision to defer the Betfair live key (~AUD 1000).
+
+Key findings:
+- Betfair free delayed key: viable for match-odds closing price reads; not for bet placement.
+- Pinnacle API: closed July 2025; AU accounts blocked. Rejected.
+- Smarkets, Matchbook, BETDAQ: all block AU customers. Rejected.
+- Multi-book consensus (Sportsbet, TAB, Ladbrokes, Pointsbet, Betr): the practical
+  default CLV reference. 1-3% less precise than Betfair Exchange close on match odds;
+  comparable or better for thin AFL player prop exchange markets.
+- Trigger to buy the live key: sustained positive CLV (> 2%) across 200+ bets over
+  a full AFL season, confirmed by the multi-book consensus reference.
+
+Execution venue restriction ranking (best to worst):
+BetRight > Unibet > Betr > Picklebet > Bet365 > Pointsbet > PlayUp > TAB > Neds > Ladbrokes > Sportsbet.

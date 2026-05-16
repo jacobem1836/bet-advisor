@@ -113,6 +113,39 @@ can emerge in ~50 bets vs ~1000+ bets for ROI-based evaluation.
 **Significance testing** (`clv_significance`): one-sample t-test (H0: CLV = 0)
 plus bootstrap percentile CI on the mean.
 
+### Reference Close (Phase 5.5)
+
+The closing probability that CLV is measured against is produced by
+`ClvReferenceResolver` in `bet_advisor.eval.clv_reference`.
+
+**Default: multi-book consensus** across Sportsbet, TAB, Ladbrokes, Pointsbet,
+and Betr (all available AU books via The Odds API). Each book's closing line is
+devigged independently using the power method, then runner probabilities are
+averaged across books weighted by overround (lower overround = sharper book =
+higher weight).
+
+**Optional: Betfair Exchange delayed key** for match-level cross-checks. The
+free delayed app key reads `lastPriceTraded` from exchange markets with a
+1-180 second delay. When matched volume exceeds the configured threshold
+(default AUD 1000), the exchange closing price is used; otherwise the resolver
+falls back to consensus with a warning.
+
+**Other modes:** `sportsbet_only` (single-book baseline) and `single_book`
+(any configured book) are available for debugging and comparison.
+
+**Accuracy vs Betfair Exchange live close:** approximately 1-3 percentage points
+less precise on match-odds markets. For AFL player prop markets (disposals,
+tackles), the gap may be smaller because exchange prop markets are thinly
+matched and carry weaker price-discovery signal.
+
+**Interpretation threshold:** require sustained CLV > 2% across 200+ bets before
+concluding the model has real edge. This accounts for the noise introduced by the
+multi-book consensus reference vs the sharp exchange close.
+
+Each settled bet records `clv_reference_source` and `clv_reference_books_used`
+in the SQLite `bets` table for audit. The daily report's CLV Reference section
+shows the active mode and any fallbacks.
+
 ---
 
 ## Model Pause Triggers

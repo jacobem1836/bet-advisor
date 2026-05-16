@@ -14,7 +14,6 @@ from bet_advisor.eval.clv_reference import (
 from bet_advisor.eval.devig import devig as _devig
 from bet_advisor.eval.devig import overround as _overround
 
-
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
@@ -52,10 +51,10 @@ class TestConsensusEqualWeighting:
         """Consensus of 5 books (equal weight) == arithmetic mean of per-book fair probs."""
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "tab":       {"A": 1.82, "B": 2.08},
+            "tab": {"A": 1.82, "B": 2.08},
             "ladbrokes": {"A": 1.78, "B": 2.12},
             "pointsbet": {"A": 1.81, "B": 2.09},
-            "betr":      {"A": 1.83, "B": 2.07},
+            "betr": {"A": 1.83, "B": 2.07},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(
@@ -129,8 +128,8 @@ class TestConsensusOverroundWeighting:
 
         or_sharp = _overround([1.97, 1.97])
         or_blunt = _overround([1.72, 1.72])
-        w_sharp = (1.0 / (1.0 + or_sharp))
-        w_blunt = (1.0 / (1.0 + or_blunt))
+        w_sharp = 1.0 / (1.0 + or_sharp)
+        w_blunt = 1.0 / (1.0 + or_blunt)
         total_w = w_sharp + w_blunt
         w_sharp /= total_w
         w_blunt /= total_w
@@ -145,8 +144,8 @@ class TestConsensusOverroundWeighting:
         """Verify weighted average formula with asymmetric odds."""
         # book1: lower overround, book2: higher overround
         books_odds = {
-            "book1": {"A": 1.90, "B": 1.95},   # ~3% overround
-            "book2": {"A": 1.80, "B": 1.92},   # ~8% overround
+            "book1": {"A": 1.90, "B": 1.95},  # ~3% overround
+            "book2": {"A": 1.80, "B": 1.92},  # ~8% overround
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(
@@ -189,7 +188,7 @@ class TestMinBooksFallback:
     def test_fewer_books_than_min_emits_warning(self) -> None:
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "tab":       {"A": 1.82, "B": 2.08},
+            "tab": {"A": 1.82, "B": 2.08},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(
@@ -212,7 +211,7 @@ class TestMinBooksFallback:
     def test_two_books_still_produces_valid_probs(self) -> None:
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "tab":       {"A": 1.82, "B": 2.08},
+            "tab": {"A": 1.82, "B": 2.08},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(
@@ -322,7 +321,7 @@ class TestSportsbetOnlyMode:
     def test_sportsbet_only_uses_single_book(self) -> None:
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "tab":       {"A": 1.82, "B": 2.08},
+            "tab": {"A": 1.82, "B": 2.08},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(mode="sportsbet_only", devig_method="power")
@@ -357,7 +356,7 @@ class TestSingleBookMode:
     def test_single_book_resolves_named_book(self) -> None:
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "betr":      {"A": 1.84, "B": 2.05},
+            "betr": {"A": 1.84, "B": 2.05},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
         cfg = ClvReferenceConfig(mode="single_book", single_book="betr", devig_method="power")
@@ -445,7 +444,7 @@ class TestBuildDefaultResolver:
     def test_default_resolver_resolves_basic_snapshot(self) -> None:
         books_odds = {
             "sportsbet": {"A": 1.80, "B": 2.10},
-            "tab":       {"A": 1.82, "B": 2.08},
+            "tab": {"A": 1.82, "B": 2.08},
             "ladbrokes": {"A": 1.78, "B": 2.12},
         }
         snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))
@@ -472,7 +471,7 @@ def test_probs_sum_to_one(mode: str, extra: dict) -> None:
     """Runner probabilities must sum to 1.0 in all modes."""
     books_odds = {
         "sportsbet": {"A": 1.80, "B": 2.10},
-        "tab":       {"A": 1.82, "B": 2.08},
+        "tab": {"A": 1.82, "B": 2.08},
         "ladbrokes": {"A": 1.78, "B": 2.12},
     }
     snapshot = _two_runner_snapshot(books_odds, runners=("A", "B"))

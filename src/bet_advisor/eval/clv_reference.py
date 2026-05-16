@@ -20,7 +20,6 @@ and the accuracy trade-offs vs a live Betfair Exchange reference.
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -172,7 +171,9 @@ class ClvReferenceResolver:
             return self._resolve_sportsbet_only(event_market_close)
         elif cfg.mode == "single_book":
             if not cfg.single_book:
-                raise ValueError("ClvReferenceConfig.single_book must be set when mode='single_book'")
+                raise ValueError(
+                    "ClvReferenceConfig.single_book must be set when mode='single_book'"
+                )
             return self._resolve_single_book(event_market_close, cfg.single_book)
         else:
             raise ValueError(f"Unknown CLV reference mode: {cfg.mode!r}")
@@ -242,9 +243,7 @@ class ClvReferenceResolver:
         # Compute weights.
         books_used = list(book_probs)
         if cfg.consensus_weighting == "by_overround":
-            raw_weights = [
-                1.0 / (1.0 + book_overrounds[b]) for b in books_used
-            ]
+            raw_weights = [1.0 / (1.0 + book_overrounds[b]) for b in books_used]
             total_w = sum(raw_weights)
             weights = [w / total_w for w in raw_weights]
         else:
@@ -324,9 +323,7 @@ class ClvReferenceResolver:
                 else f"Betfair volume {total_volume:.0f} AUD below threshold "
                 f"{cfg.betfair_delayed_min_volume:.0f} AUD"
             )
-            warnings.append(
-                f"Betfair delayed mode falling back to consensus: {reason}."
-            )
+            warnings.append(f"Betfair delayed mode falling back to consensus: {reason}.")
             logger.warning("CLV Betfair mode: falling back to consensus (%s)", reason)
             result = self._resolve_consensus(snapshot)
             result["warnings"] = warnings + result["warnings"]
@@ -379,9 +376,7 @@ class ClvReferenceResolver:
         for r in runners:
             price = r.get("books", {}).get(book)
             if price is None:
-                raise ValueError(
-                    f"Runner {r.get('name')!r} has no price for book {book!r}."
-                )
+                raise ValueError(f"Runner {r.get('name')!r} has no price for book {book!r}.")
             odds.append(float(price))
 
         try:
@@ -412,14 +407,10 @@ class ClvReferenceResolver:
     def _validate_input(snapshot: dict[str, Any]) -> None:
         """Raise ValueError for empty or malformed snapshots."""
         if not isinstance(snapshot, dict):
-            raise ValueError(
-                f"event_market_close must be a dict; got {type(snapshot).__name__!r}"
-            )
+            raise ValueError(f"event_market_close must be a dict; got {type(snapshot).__name__!r}")
         runners = snapshot.get("runners")
         if not runners:
-            raise ValueError(
-                "event_market_close['runners'] must be a non-empty list"
-            )
+            raise ValueError("event_market_close['runners'] must be a non-empty list")
         if not isinstance(runners, list):
             raise ValueError(
                 f"event_market_close['runners'] must be a list; got {type(runners).__name__!r}"

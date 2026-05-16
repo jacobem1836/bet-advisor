@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -165,8 +165,11 @@ class TestBetfairDelayedClientLogin:
             {"betfairlightweight": MagicMock(APIClient=mock_api_class)},
         ):
             client = BetfairDelayedClient(
-                username="u", password="p", app_key="k",
-                cert_path="/c/cert.crt", cert_key_path="/c/cert.key",
+                username="u",
+                password="p",
+                app_key="k",
+                cert_path="/c/cert.crt",
+                cert_key_path="/c/cert.key",
             )
             client.login()
 
@@ -319,8 +322,18 @@ class TestBetfairDelayedGetCloseSnapshot:
             "status": "SUSPENDED",
             "total_matched": 95000.0,
             "runners": [
-                {"selection_id": 1, "last_price_traded": 1.85, "total_matched": 55000.0, "status": "ACTIVE"},
-                {"selection_id": 2, "last_price_traded": 2.10, "total_matched": 40000.0, "status": "ACTIVE"},
+                {
+                    "selection_id": 1,
+                    "last_price_traded": 1.85,
+                    "total_matched": 55000.0,
+                    "status": "ACTIVE",
+                },
+                {
+                    "selection_id": 2,
+                    "last_price_traded": 2.10,
+                    "total_matched": 40000.0,
+                    "status": "ACTIVE",
+                },
             ],
         }
         responses = [open_snap, open_snap, suspended_snap]
@@ -357,7 +370,10 @@ class TestBetfairDelayedGetCloseSnapshot:
                 return 0.0
             return 9999.0
 
-        with patch("time.sleep"), patch("bet_advisor.ingest.betfair.time.monotonic", side_effect=_fast_clock):
+        with (
+            patch("time.sleep"),
+            patch("bet_advisor.ingest.betfair.time.monotonic", side_effect=_fast_clock),
+        ):
             result = client.get_close_snapshot(
                 "1.999",
                 wait_for_suspend=True,

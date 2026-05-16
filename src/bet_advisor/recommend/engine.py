@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from bet_advisor.eval.clv_reference import ClvReferenceResolver, build_default_resolver
 from bet_advisor.eval.devig import devig as _devig
 from bet_advisor.eval.ev import edge as _edge
 from bet_advisor.eval.kelly import capped_kelly, fractional_kelly, full_kelly
@@ -102,6 +103,13 @@ class RecommendationConfig:
     max_exposure_per_day_units: float = 10.0
     speculative_uncertainty_threshold: float = 0.25
     speculative_stake_cap: float = 0.5
+    clv_reference: ClvReferenceResolver | None = None
+    """CLV reference resolver used when computing CLV at settlement.
+
+    Defaults to None; the engine will instantiate a default resolver
+    (multi_book_consensus, power devig, AU books) on first use.
+    Set this explicitly to override the mode or book list.
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -607,6 +615,90 @@ class RecommendationEngine:
             bet_ids.append(bet_id)
 
         return bet_ids
+
+    # ------------------------------------------------------------------
+    # CLV settlement
+
+    def compute_clv_for_settlement(
+        self,
+        bet_odds: float,
+        market_close: dict[str, Any],
+        runner_name: str,
+    ) -> dict[str, Any]:
+        """Compute CLV for a settled bet using the configured reference resolver.
+
+        Parameters
+        ----------
+        bet_odds:
+            Decimal odds received at placement for this bet.
+        market_close:
+            Closing market snapshot in the ClvReferenceResolver input format::
+
+                {
+                    "runners": [
+                        {
+                            "name": "Richmond",
+                            "books": {"sportsbet": 1.80, ...},
+                            "betfair_delayed": {"price": 1.83, "volume_matched": 2500}
+                        },
+                        ...
+                    ]
+                }
+
+        runner_name:
+            Name of the runner this bet was placed on. Must match a name in
+            ``market_close["runners"]``.
+
+        Returns
+        -------
+        dict with keys:
+            - ``clv_pct`` (float): CLV as a probability difference. Positive
+              means the bet was placed at better odds than the reference close.
+            - ``ref_prob`` (float): reference fair probability for this runner.
+            - ``ref_source`` (str): which book/mode provided the reference.
+            - ``method`` (str): resolver mode used.
+            - ``books_used`` (list[str]): books contributing to the reference.
+            - ``warnings`` (list[str]): any warnings from resolution.
+
+        Raises
+        ------
+        ValueError
+            If runner_name is not found in the market_close snapshot, or if
+            bet_odds is invalid.
+        """
+        if bet_odds <= 1.0:
+            raise ValueError(f"bet_odds must be > 1.0; got {bet_odds!r}")
+
+        resolver = self._config.clv_reference or build_default_resolver()
+        resolution = resolver.resolve(market_close)
+
+        # Find the runner's reference probability.
+        ref_prob: float | None = None
+        ref_source: str = ""
+        for r in resolution["runners"]:
+            if r["name"] == runner_name:
+                ref_prob = r["ref_prob"]
+                ref_source = r.get("ref_source", "")
+                break
+
+        if ref_prob is None:
+            available = [r["name"] for r in resolution["runners"]]
+            raise ValueError(
+                f"Runner {runner_name!r} not found in market_close snapshot. "
+                f"Available runners: {available}"
+            )
+
+        bet_implied_prob = 1.0 / bet_odds
+        clv_pct = ref_prob - bet_implied_prob
+
+        return {
+            "clv_pct": clv_pct,
+            "ref_prob": ref_prob,
+            "ref_source": ref_source,
+            "method": resolution["method"],
+            "books_used": resolution["books_used"],
+            "warnings": resolution["warnings"],
+        }
 
     # ------------------------------------------------------------------
     # Internal helpers
